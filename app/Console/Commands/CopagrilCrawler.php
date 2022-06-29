@@ -56,6 +56,11 @@ class CopagrilCrawler extends Command
         $headers = [];
         $data = [];
 
+        /**
+         * Utilizando o modelo de query do XPATH do XML eu consigo buscar uma tabela dentro do ROOT ou seja do HTML.
+         * Buscando a tabela eu pego todas as linhas dela, como a leitura é sempre de cima pra baixa e da esquerda pra
+         * direita, o HEADER sempre será o primeiro TR.
+         */
         $bodyData = $htmlXpath->evaluate('//table[contains(@class, "tabela-precos")]//tr');
         $count = 0;
         foreach ($bodyData as $datum) {
@@ -77,6 +82,10 @@ class CopagrilCrawler extends Command
             }
         }
 
+        /**
+         * Faço uma mapa através do array Data para que eu possa utilizar os dados e inserir as chaves de acordo com o
+         * header assim tornando mais legivel o meu array através de um dump ou até mesmo para jogar para tela.
+         */
         $data = array_map(function ($item) use ($headers) {
             return [
                 $headers[0] => implode(' ', explode(' - ', $item[0])),
