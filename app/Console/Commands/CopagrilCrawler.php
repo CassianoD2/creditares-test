@@ -46,7 +46,6 @@ class CopagrilCrawler extends Command
     {
         $retorno = $this->copagrilService->getHtml(2023, 1);
 
-        dd($retorno);
         $domHtml = new \DOMDocument();
         $domHtml->loadHTML($retorno['body']);
 
