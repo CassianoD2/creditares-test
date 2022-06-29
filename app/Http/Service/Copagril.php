@@ -31,13 +31,13 @@ class Copagril
                 'body' => $html,
             ];
 
-        } else {
-            return [
-                'error' => true,
-                'status' => $request->getStatusCode(),
-                'body' => 'Consulta indisponível!',
-            ];
         }
 
+        //Retorno de erro do cURL(Guzzle)
+        return [
+            'error' => true,
+            'status' => $request->getStatusCode(),
+            'body' => 'Consulta indisponível!',
+        ];
     }
 }
