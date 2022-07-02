@@ -17,11 +17,11 @@ class UnidadesPadroesAdd extends Migration
         DB::table('unidades')->insert([
             [
                 'nome' => 'Unidade Parana',
-                'cookie_name' => 'unidade_parana'
+                'cookie_name' => 'unidades_parana'
             ],
             [
                 'nome' => 'Unidade Mato Grosso do Sul',
-                'cookie_name' => 'unidade_matogrossosul'
+                'cookie_name' => 'unidades_matogrossosul'
             ],
         ]);
     }
@@ -33,6 +33,6 @@ class UnidadesPadroesAdd extends Migration
      */
     public function down()
     {
-        DB::delete("DELETE FROM unidades WHERE cookie_name IN ('unidade_parana', 'unidade_matogrossosul')");
+        DB::delete("DELETE FROM unidades WHERE cookie_name IN ('unidades_parana', 'unidades_matogrossosul')");
     }
 }

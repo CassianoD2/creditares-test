@@ -69,7 +69,7 @@ class Copagril
         $count = 0;
         foreach ($bodyData as $datum) {
             //Faço o carregamento do header dentro de uma variável para poder fazer um parse posteriormente.
-            if ($count == 0 && $datum->childNodes->length == 4) {
+            if ($count == 0 && in_array($datum->childNodes->length, [3,4])) {
                 foreach ($datum->childNodes as $childNode) {
                     $headers[] = $childNode->nodeValue;
                 }
@@ -78,7 +78,7 @@ class Copagril
             }
 
             //Faço o insert dos dados do tbody da tabela para processamento posterior.
-            if ($datum->childNodes->length == 4) {
+            if (in_array($datum->childNodes->length, [3,4])) {
                 foreach ($datum->childNodes as $childNode) {
                     $data[$count][] = $childNode->nodeValue;
                 }
@@ -91,12 +91,17 @@ class Copagril
          * header assim tornando mais legivel o meu array através de um dump ou até mesmo para jogar para tela.
          */
         $data = array_map(function ($item) use ($headers) {
-            return [
+            $return = [
                 $headers[0] => implode(' ', explode(' - ', $item[0])),
                 $headers[1] => $item[1],
                 $headers[2] => $item[2],
-                $headers[3] => $item[3],
             ];
+
+            if (isset($headers[3])) {
+                $return[$headers[3]] = $item[3];
+            }
+
+            return $return;
         }, $data);
 
         return [
@@ -119,44 +124,86 @@ class Copagril
 
         $arrayInsert = [];
         //Percorro os registro para poder realizar a inserção;
-        foreach ($data['data'] as $registro) {
-            $arrayInicial = [
-                'unidade_id' => $idUnidade->id,
-                'cultura_id' => null,
-                'preco' => null,
-                'data_preco' => null,
-            ];
+        try {
+            foreach ($data['data'] as $registro) {
+                $arrayInicial = [
+                    'unidade_id' => $idUnidade->id,
+                    'cultura_id' => null,
+                    'preco' => null,
+                    'data_preco' => null,
+                ];
 
-            foreach ($registro as $key => $item) {
-                switch ($key) {
-                    case 'Data':
-                        $arrayInicial['data_preco'] = Carbon::createFromFormat('d/m/Y H:i', $item)
-                            ->format('Y-m-d H:i:s');
-                        break;
+                foreach ($registro as $key => $item) {
+                   switch ($key) {
+                        case 'Data':
 
-                    case 'Soja':
-                        $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Soja')->pluck('id')->first();
-                        $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], $item);
-                        $arrayInsert[] = $arrayInicial;
-                        break;
+                            $arrayInicial['data_preco'] = $this->processaDataPreco($item);
+                            break;
 
-                    case 'Milho':
-                        $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Milho')->pluck('id')->first();
-                        $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], $item);
-                        $arrayInsert[] = $arrayInicial;
-                        break;
+                        case 'Soja':
+                            if (empty(trim($item))) {
+                                break;
+                            }
+                            $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Soja')->pluck('id')->first();
+                            $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], trim($item));
+                            $arrayInsert[] = $arrayInicial;
+                            break;
 
-                    case 'Trigo':
-                        $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Trigo')->pluck('id')->first();
-                        $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], $item);
-                        $arrayInsert[] = $arrayInicial;
-                        break;
+                        case 'Milho':
+                            if (empty(trim($item))) {
+                                break;
+                            }
+                            $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Milho')->pluck('id')->first();
+                            $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], trim($item));
+                            $arrayInsert[] = $arrayInicial;
+                            break;
+
+                        case 'Trigo':
+                            if (empty(trim($item))) {
+                                break;
+                            }
+                            $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Trigo')->pluck('id')->first();
+                            $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], trim($item));
+                            $arrayInsert[] = $arrayInicial;
+                            break;
+                    }
+                }
+
+                if (CulturaPrecos::insertBatch($arrayInsert)) {
+                    $arrayInsert = [];
                 }
             }
+        } catch (\Exception $exception) {
+            dd($exception->getMessage());
+        }
+    }
 
-            if (CulturaPrecos::insertBatch($arrayInsert)) {
-                $arrayInsert = [];
+    private function processaDataPreco($item)
+    {
+        $explodeString = explode(' ', trim($item));
+        $contadorDeStrings = count($explodeString);
+
+        $data = $explodeString[0];
+        $hora = "00:00:00";
+
+        if ($contadorDeStrings == 2) {
+            switch (mb_strtolower($explodeString[1])) {
+                case 'manha':
+                case 'manhã':
+                    $hora = "09:00:00";
+                    break;
+
+                case 'tarde':
+                    $hora = "14:00:00";
+                    break;
+            }
+
+            if (preg_match('/[0-9]{2}\:[0-9]{2}/', $explodeString[1])) {
+                $hora = $explodeString[1].':00';
             }
         }
+
+        return Carbon::createFromFormat('d/m/Y H:i:s', "{$data} {$hora}")
+            ->format('Y-m-d H:i:s');
     }
 }

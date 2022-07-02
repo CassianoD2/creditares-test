@@ -17,7 +17,7 @@ class CulturaPrecosUnidadeFk extends Migration
             $table->foreignId('unidade_id');
             $table->foreign('unidade_id', 'unidade_id')->references('id')->on('unidades');
 
-            $table->unique(['cultura_id', 'data_preco', 'preco'], 'cultura_preco_data_preco');
+            $table->unique(['cultura_id', 'data_preco', 'preco', 'unidade_id'], 'cultura_preco_data_preco_unidade');
         });
     }
 

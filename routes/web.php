@@ -13,9 +13,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [\App\Http\Controllers\Visualizacao::class, 'showCulturas'])->name('culturas');
+Route::get('/ver-preco/{id}', [\App\Http\Controllers\Visualizacao::class, 'visualizarPrecos'])->name('ver-precos');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
