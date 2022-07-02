@@ -38,13 +38,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($culturas as $cultura)
+                            @forelse($culturas as $cultura)
                                 <tr>
                                     <td>{{$cultura->id}}</td>
                                     <td>{{$cultura->nome}}</td>
                                     <td><a href="{{ route('ver-precos', ['id' => $cultura->id]) }}" class="btn btn-primary">Visualizar Preços</a></td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="3">Sem Dados - Executar Migration e Executar o Crawler</td>
+                                </tr>
+                            @forelse
                         </tbody>
                     </table>
                 </div>
