@@ -2,6 +2,10 @@
 
 namespace App\Http\Service;
 
+use App\Models\CulturaPrecos;
+use App\Models\Culturas;
+use App\Models\Unidades;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 
 class Copagril
@@ -24,6 +28,7 @@ class Copagril
             'error' => false,
             'status' => $request->getStatusCode(),
             'body' => null,
+            'cidade' => $cidade
         ];
         /**
          * Auxilia a identificar qual o tipo de retorno, retorno ou falha.
@@ -42,7 +47,7 @@ class Copagril
      * Responsável por fazer a leitura dos dados retornados do getHTML.
      *
      * @param $retorno Retorno do getHTML do serviço.
-     * @return void
+     * @return array
      */
     public function processaTabela($retorno)
     {
@@ -94,6 +99,64 @@ class Copagril
             ];
         }, $data);
 
-        return $data;
+        return [
+            'cidade' => $retorno['cidade'],
+            'data' => $data,
+        ];
+    }
+
+    /**
+     * Função responsável por fazer a inserção no banco de dados.
+     *
+     * @param $data
+     *
+     * @return void
+     */
+    public function populaTabelas($data)
+    {
+        $idUnidade = Unidades::getUnidadesByCookieName($data['cidade']);
+        $culturas = Culturas::all();
+
+        $arrayInsert = [];
+        //Percorro os registro para poder realizar a inserção;
+        foreach ($data['data'] as $registro) {
+            $arrayInicial = [
+                'unidade_id' => $idUnidade->id,
+                'cultura_id' => null,
+                'preco' => null,
+                'data_preco' => null,
+            ];
+
+            foreach ($registro as $key => $item) {
+                switch ($key) {
+                    case 'Data':
+                        $arrayInicial['data_preco'] = Carbon::createFromFormat('d/m/Y H:i', $item)
+                            ->format('Y-m-d H:i:s');
+                        break;
+
+                    case 'Soja':
+                        $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Soja')->pluck('id')->first();
+                        $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], $item);
+                        $arrayInsert[] = $arrayInicial;
+                        break;
+
+                    case 'Milho':
+                        $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Milho')->pluck('id')->first();
+                        $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], $item);
+                        $arrayInsert[] = $arrayInicial;
+                        break;
+
+                    case 'Trigo':
+                        $arrayInicial['cultura_id'] = $culturas->where('nome', '=', 'Trigo')->pluck('id')->first();
+                        $arrayInicial['preco'] = (float)str_replace(['R$', ',', ' '], ['', '.', ''], $item);
+                        $arrayInsert[] = $arrayInicial;
+                        break;
+                }
+            }
+
+            if (CulturaPrecos::insertBatch($arrayInsert)) {
+                $arrayInsert = [];
+            }
+        }
     }
 }

@@ -17,8 +17,7 @@ class CreateCulturaPrecosTable extends Migration
             $table->id();
             $table->foreignId('cultura_id');
             $table->decimal('preco', 12,2);
-            $table->dateTime('data_preco')->unique();
-
+            $table->dateTime('data_preco');
             $table->foreign('cultura_id', 'cultura_id')->references('id')->on('culturas');
         });
     }

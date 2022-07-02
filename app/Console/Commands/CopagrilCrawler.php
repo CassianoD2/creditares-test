@@ -44,11 +44,10 @@ class CopagrilCrawler extends Command
      */
     public function handle()
     {
-        $retorno = $this->copagrilService->getHtml(2022, 1);
+        $retorno = $this->copagrilService->getHtml(2022, 6);
 
-
-
-        dd($data);
+        $data = $this->copagrilService->processaTabela($retorno);
+        $this->copagrilService->populaTabelas($data);
         return 0;
     }
 }

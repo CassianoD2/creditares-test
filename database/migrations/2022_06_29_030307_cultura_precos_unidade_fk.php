@@ -16,6 +16,8 @@ class CulturaPrecosUnidadeFk extends Migration
         Schema::table('cultura_precos', function (Blueprint $table) {
             $table->foreignId('unidade_id');
             $table->foreign('unidade_id', 'unidade_id')->references('id')->on('unidades');
+
+            $table->unique(['cultura_id', 'data_preco', 'preco'], 'cultura_preco_data_preco');
         });
     }
 
